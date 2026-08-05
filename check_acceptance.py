@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from app.database import SessionLocal
-from app.models import BanditState, HabitLibrary, IntakeLog, MessageLog, TimeBanditState, User
+from app.db.database import SessionLocal
+from app.db.models import BanditState, HabitLibrary, IntakeLog, MessageLog, TimeBanditState, User
 
 results = []
 

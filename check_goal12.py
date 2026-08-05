@@ -1,4 +1,4 @@
-from app.database import SessionLocal
+from app.db.database import SessionLocal
 from sqlalchemy import text
 
 session = SessionLocal()

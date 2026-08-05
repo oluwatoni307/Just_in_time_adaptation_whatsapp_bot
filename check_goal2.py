@@ -1,10 +1,10 @@
 import asyncio
 from datetime import datetime, timedelta
 
-from app.database import SessionLocal
-from app.models import MessageLog
+from app.db.database import SessionLocal
+from app.db.models import MessageLog
 from app.channel import send_message
-from app.webhook import on_incoming_message
+from app.response_handling_and_logging.webhook import on_incoming_message
 
 
 async def main():

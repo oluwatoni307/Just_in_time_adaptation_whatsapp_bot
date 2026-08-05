@@ -1,8 +1,8 @@
 import random
 from datetime import datetime, time, timedelta
 
-from .database import SessionLocal
-from .models import BanditState, TimeBanditState
+from .db.database import SessionLocal
+from .db.models import BanditState, TimeBanditState
 
 
 # Clock-time window each bucket actually covers. Used only for step 4 —
