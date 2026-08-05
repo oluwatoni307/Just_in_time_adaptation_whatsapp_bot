@@ -4,6 +4,8 @@ import os
 
 from fastapi import FastAPI, Request, Response
 
+from app.response_handling_and_logging.handleIncomingMessage import handle_incoming_message
+
 VERIFY_TOKEN = os.environ["VERIFY_TOKEN"]
 APP_SECRET = os.environ["APP_SECRET"]
 
@@ -50,9 +52,30 @@ async def receive(request: Request):
     return Response(status_code=200)
 
 
+def _normalize_phone(whatsapp_number: str) -> str:
+    """
+    WhatsApp sends E.164 digits without '+' (e.g. '2348142156076').
+    Our db currently stores local format ('08142156076'). Converts
+    WhatsApp's format to match what's stored.
+    TODO: better long-term fix is storing E.164 everywhere instead of
+    normalizing on every read — flagging, not fixing here.
+    """
+    if whatsapp_number.startswith("234") and len(whatsapp_number) == 13:
+        return "0" + whatsapp_number[3:]
+    return whatsapp_number
+
+
+class IncomingMessage:
+    def __init__(self, userId: str, text: str, type: str = "text"):
+        self.userId = userId
+        self.text = text
+        self.type = type
+
+
 def handle_text(sender: str, message_id: str, body: str):
-    print({"sender": sender, "message_id": message_id, "body": body})
-    # TODO: your logic here
+    phone_number = _normalize_phone(sender)
+    message = IncomingMessage(userId=phone_number, text=body, type="text")
+    handle_incoming_message(message)
 
 
 def handle_reaction(sender: str, reacted_message_id: str, emoji: str | None):

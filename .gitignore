@@ -50,3 +50,6 @@ dist/
 *.tmp
 *.temp
 *.swp
+
+# add fireAuth.json
+fireAuth.json
