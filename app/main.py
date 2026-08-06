@@ -9,6 +9,8 @@ from app.response_handling_and_logging.handleIncomingMessage import handle_incom
 VERIFY_TOKEN = os.environ["VERIFY_TOKEN"]
 APP_SECRET = os.environ["APP_SECRET"]
 
+print(f"DEBUG APP_SECRET starts_with={APP_SECRET[:6]!r} length={len(APP_SECRET)}")  # TODO: remove after debugging
+
 app = FastAPI()
 
 
@@ -25,6 +27,8 @@ async def receive(request: Request):
     body = await request.body()
     sig = request.headers.get("X-Hub-Signature-256", "")
     expected = "sha256=" + hmac.new(APP_SECRET.encode(), body, hashlib.sha256).hexdigest()
+
+    print(f"DEBUG expected={expected!r} received={sig!r}")  # TODO: remove after debugging
 
     if not hmac.compare_digest(expected, sig):
         return Response(status_code=403)
@@ -46,20 +50,13 @@ async def receive(request: Request):
                     handle_reaction(
                         sender=msg.get("from"),
                         reacted_message_id=reaction.get("message_id"),
-                        emoji=reaction.get("emoji"),  # missing emoji = reaction removed
+                        emoji=reaction.get("emoji"),
                     )
 
     return Response(status_code=200)
 
 
 def _normalize_phone(whatsapp_number: str) -> str:
-    """
-    WhatsApp sends E.164 digits without '+' (e.g. '2348142156076').
-    Our db currently stores local format ('08142156076'). Converts
-    WhatsApp's format to match what's stored.
-    TODO: better long-term fix is storing E.164 everywhere instead of
-    normalizing on every read — flagging, not fixing here.
-    """
     if whatsapp_number.startswith("234") and len(whatsapp_number) == 13:
         return "0" + whatsapp_number[3:]
     return whatsapp_number
@@ -79,7 +76,4 @@ def handle_text(sender: str, message_id: str, body: str):
 
 
 def handle_reaction(sender: str, reacted_message_id: str, emoji: str | None):
-    # look up `reacted_message_id` against whatever you stored when you
-    # originally sent/received that message, to know what it's about
     print({"sender": sender, "reacted_message_id": reacted_message_id, "emoji": emoji})
-    # TODO: your logic here

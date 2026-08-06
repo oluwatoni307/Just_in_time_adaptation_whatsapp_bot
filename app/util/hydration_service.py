@@ -2,7 +2,9 @@ import os
 
 import firebase_admin
 from firebase_admin import credentials,  firestore
+from dotenv import load_dotenv          # <-- add this
 
+load_dotenv()     
 
 cred_path = os.environ.get("FIREBASE_CREDENTIALS_PATH", "serviceAccountKey.json")
 cred = credentials.Certificate(cred_path)
