@@ -12,7 +12,6 @@ Non-text messages: canned reply, no reply-tracking (nothing to mark).
 import logging
 
 from app.db.repo import get_latest_unreplied_message, mark_replied, get_user_by_phone, create_user
-from app.main import IncomingMessage
 from app.response_handling_and_logging.llm import process as llm_process
 from app.util.send_message import send_text
 
