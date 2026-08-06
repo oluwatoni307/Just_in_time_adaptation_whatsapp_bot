@@ -9,7 +9,6 @@ from app.response_handling_and_logging.handleIncomingMessage import handle_incom
 VERIFY_TOKEN = os.environ["VERIFY_TOKEN"]
 APP_SECRET = os.environ["APP_SECRET"]
 
-print(f"DEBUG APP_SECRET starts_with={APP_SECRET[:6]!r} length={len(APP_SECRET)}")  # TODO: remove after debugging
 
 app = FastAPI()
 
