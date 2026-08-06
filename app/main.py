@@ -28,7 +28,6 @@ async def receive(request: Request):
     sig = request.headers.get("X-Hub-Signature-256", "")
     expected = "sha256=" + hmac.new(APP_SECRET.encode(), body, hashlib.sha256).hexdigest()
 
-    print(f"DEBUG expected={expected!r} received={sig!r}")  # TODO: remove after debugging
 
     if not hmac.compare_digest(expected, sig):
         return Response(status_code=403)

@@ -19,9 +19,10 @@ logger = logging.getLogger("handle_incoming_message")
 
 TEXT = "text"
 
-
-def handle_incoming_message(message):
+from main import IncomingMessage
+def handle_incoming_message(message: IncomingMessage):
     phone_number = message.userId
+    print(f"DEBUG handle_incoming_message: phone_number={phone_number!r}, message_type={message.type!r}, message_text={message.text!r}")
 
     if message.type != TEXT:
         send_text(phone_number, "Got it — text works best for now.")
