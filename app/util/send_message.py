@@ -1,6 +1,7 @@
 """
-send_message.py — orchestration layer. Resolves user_id -> phone_number
-via repo, picks copy from library.py, hands off to messaging.py to send.
+send_message.py — orchestration layer. user_id IS the phone number (see
+the phone-number-as-primary-key migration), so no separate lookup needed
+to get a sendable number — just confirm the user exists.
 Implements the original sendMessage(userId, messageType) function.
 """
 
@@ -12,17 +13,26 @@ from app.util.messaging import send_whatsapp_text, SendResult
 from app.util.library import MESSAGE_LIBRARY
 
 
+def _to_e164(local_number: str) -> str:
+    """
+    Our db stores local format ('08142156076'). WhatsApp's API needs
+    E.164 digits, no '+' ('2348142156076'). Reverse of main.py's
+    _normalize_phone.
+    TODO: same flag as before — storing E.164 everywhere would remove
+    the need for conversion on both ends.
+    """
+    if local_number.startswith("0"):
+        return "234" + local_number[1:]
+    return local_number
+
+
 def send_message(user_id: int, arm: BanditArm) -> SendResult:
     user = get_user(user_id)
     if user is None:
         return SendResult(failed=True, error=f"no user found for user_id={user_id}")
 
-    phone_number = getattr(user, "phone_number", None)
-    if not phone_number:
-        return SendResult(failed=True, error=f"no phone_number for user_id={user_id}")
-
     text = random.choice(MESSAGE_LIBRARY.get(arm, ["Hey — checking in!"]))
-    return send_whatsapp_text(phone_number, text)
+    return send_whatsapp_text(_to_e164(user.user_id), text)
 
 
 def send_text(user_id: int, text: str) -> SendResult:
@@ -34,8 +44,4 @@ def send_text(user_id: int, text: str) -> SendResult:
     if user is None:
         return SendResult(failed=True, error=f"no user found for user_id={user_id}")
 
-    phone_number = getattr(user, "phone_number", None)
-    if not phone_number:
-        return SendResult(failed=True, error=f"no phone_number for user_id={user_id}")
-
-    return send_whatsapp_text(phone_number, text)
+    return send_whatsapp_text(_to_e164(user.user_id), text)
