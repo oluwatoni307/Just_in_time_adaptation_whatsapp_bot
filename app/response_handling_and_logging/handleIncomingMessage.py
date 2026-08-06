@@ -12,6 +12,7 @@ Non-text messages: canned reply, no reply-tracking (nothing to mark).
 import logging
 
 from app.db.repo import get_latest_unreplied_message, mark_replied, get_user_by_phone, create_user
+from app.main import IncomingMessage
 from app.response_handling_and_logging.llm import process as llm_process
 from app.util.send_message import send_text
 
@@ -19,8 +20,7 @@ logger = logging.getLogger("handle_incoming_message")
 
 TEXT = "text"
 
-from app.main import IncomingMessage
-def handle_incoming_message(message: IncomingMessage):
+def handle_incoming_message(message):
     phone_number = message.userId
     print(f"DEBUG handle_incoming_message: phone_number={phone_number!r}, message_type={message.type!r}, message_text={message.text!r}")
 
