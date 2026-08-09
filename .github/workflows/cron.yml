@@ -1,0 +1,78 @@
+name: BlueDrop Cron Jobs
+
+on:
+  schedule:
+    - cron: '0 5 * * *'   # bandit_scheduler   (06:00 Nigeria)
+    - cron: '0 7 * * *'   # send_morning       (08:00 Nigeria)
+    - cron: '0 11 * * *'  # send_midday        (12:00 Nigeria)
+    - cron: '0 15 * * *'  # send_afternoon     (16:00 Nigeria)
+    - cron: '0 19 * * *'  # send_evening       (20:00 Nigeria)
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Which job to run manually'
+        required: true
+        type: choice
+        options:
+          - bandit_scheduler
+          - send_morning
+          - send_midday
+          - send_afternoon
+          - send_evening
+
+jobs:
+  run-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Determine which job to run
+        id: pick
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "job=${{ inputs.job }}" >> "$GITHUB_OUTPUT"
+          else
+            case "${{ github.event.schedule }}" in
+              '0 5 * * *')  echo "job=bandit_scheduler" >> "$GITHUB_OUTPUT" ;;
+              '0 7 * * *')  echo "job=send_morning" >> "$GITHUB_OUTPUT" ;;
+              '0 11 * * *') echo "job=send_midday" >> "$GITHUB_OUTPUT" ;;
+              '0 15 * * *') echo "job=send_afternoon" >> "$GITHUB_OUTPUT" ;;
+              '0 19 * * *') echo "job=send_evening" >> "$GITHUB_OUTPUT" ;;
+            esac
+          fi
+
+      - name: Run bandit scheduler
+        if: steps.pick.outputs.job == 'bandit_scheduler'
+        run: python -m app.cron_run.daily_bandit_scheduler
+        env: &envvars
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+          WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+          WHATSAPP_BUSINESS_ACCOUNT_ID: ${{ secrets.WHATSAPP_BUSINESS_ACCOUNT_ID }}
+
+      - name: Send morning nudges
+        if: steps.pick.outputs.job == 'send_morning'
+        run: python -m app.cron_run.sendUserMessage morning
+        env: *envvars
+
+      - name: Send midday nudges
+        if: steps.pick.outputs.job == 'send_midday'
+        run: python -m app.cron_run.sendUserMessage midday
+        env: *envvars
+
+      - name: Send afternoon nudges
+        if: steps.pick.outputs.job == 'send_afternoon'
+        run: python -m app.cron_run.sendUserMessage afternoon
+        env: *envvars
+
+      - name: Send evening nudges
+        if: steps.pick.outputs.job == 'send_evening'
+        run: python -m app.cron_run.sendUserMessage evening
+        env: *envvars

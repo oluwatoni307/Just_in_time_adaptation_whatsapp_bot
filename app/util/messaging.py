@@ -45,3 +45,25 @@ def send_whatsapp_text(phone_number: str, text: str) -> SendResult:
     except requests.RequestException as e:
         logger.error("send_whatsapp_text failed for phone_number=%s: %s", phone_number, e)
         return SendResult(failed=True, error=str(e))
+def send_whatsapp_template(phone_number: str, template_name: str, language: str = "en") -> SendResult:
+    try:
+        response = requests.post(
+            WHATSAPP_API_URL,
+            headers={"Authorization": f"Bearer {WHATSAPP_TOKEN}"},
+            json={
+                "messaging_product": "whatsapp",
+                "to": phone_number,
+                "type": "template",
+                "template": {
+                    "name": template_name,
+                    "language": {"code": language},
+                },
+            },
+            timeout=10,
+        )
+        if response.status_code >= 400:
+            return SendResult(failed=True, error=f"WhatsApp API error {response.status_code}: {response.text}")
+        return SendResult(failed=False)
+    except requests.RequestException as e:
+        logger.error("send_whatsapp_template failed for phone_number=%s: %s", phone_number, e)
+        return SendResult(failed=True, error=str(e))

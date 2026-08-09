@@ -25,12 +25,18 @@ def round_to_nearest_hour(dt: datetime) -> datetime:
     return dt.replace(minute=0, second=0, microsecond=0)
 
 
+from zoneinfo import ZoneInfo
+
+NIGERIA_TZ = ZoneInfo("Africa/Lagos")
+
 def current_bucket(now: Optional[datetime] = None) -> Optional[TimeBucket]:
-    """
-    Rounds now to the nearest hour, returns the TimeBucket whose fixed time
-    matches — or None if no bucket aligns with that hour.
-    """
-    now = now or datetime.now()
+    if now is None:
+        now = datetime.now(NIGERIA_TZ)
+    elif now.tzinfo is None:
+        now = now.replace(tzinfo=NIGERIA_TZ)
+    else:
+        now = now.astimezone(NIGERIA_TZ)
+
     rounded = round_to_nearest_hour(now).time()
 
     for bucket, fixed_time in TIME_BUCKET_TIMES.items():

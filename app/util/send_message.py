@@ -9,7 +9,6 @@ import random
 
 from app.db.models import BanditArm
 from app.db.repo import get_user
-from app.util.messaging import send_whatsapp_text, SendResult
 from app.util.library import MESSAGE_LIBRARY
 
 
@@ -26,13 +25,21 @@ def _to_e164(local_number: str) -> str:
     return local_number
 
 
+from app.util.messaging import send_whatsapp_text, send_whatsapp_template, SendResult
+
 def send_message(user_id: int, arm: BanditArm) -> SendResult:
     user = get_user(user_id)
     if user is None:
         return SendResult(failed=True, error=f"no user found for user_id={user_id}")
 
-    text = random.choice(MESSAGE_LIBRARY.get(arm, ["Hey — checking in!"]))
-    return send_whatsapp_text(_to_e164(user.user_id), text)
+    messages = MESSAGE_LIBRARY.get(arm)
+    if not messages:
+        return SendResult(failed=True, error=f"no messages found for arm={arm}")
+
+    index = random.randrange(len(messages))
+    template_name = f"hydration_{arm.value}_{index + 1}"
+
+    return send_whatsapp_template(_to_e164(user.user_id), template_name)
 
 
 def send_text(user_id: int, text: str) -> SendResult:
