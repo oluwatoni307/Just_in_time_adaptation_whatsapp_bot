@@ -10,7 +10,6 @@ import logging
 
 from app.db.repo import get_latest_unreplied_message, mark_replied
 from llm import process as llm_process          # ASSUMED interface — not yet verified
-from hydration_service import log_intake        # ASSUMED interface — not yet verified
 from app.util.messaging import send_message              # ASSUMED interface — not yet verified
 
 logger = logging.getLogger("handle_incoming_message")

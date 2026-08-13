@@ -105,18 +105,18 @@ def get_scheduled_for_bucket(time_bucket: TimeBucket) -> List[ScheduledMessage]:
     finally:
         db.close()
 
-
-def log_message_sent(user_id: int, arm: BanditArm) -> SaveResult:
+def log_message_sent(user_id: int, arm: BanditArm, time_bucket: TimeBucket) -> SaveResult:
     """
     Writes a MessageLog row right after a message is sent.
-    replied_at / counted_success start null — evaluateReplyOutcomes fills
-    those in later.
+    replied_at / counted_success start null — filled in when a reply
+    comes in (see handleIncomingMessage.py).
     """
     db = SessionLocal()
     try:
         db.add(MessageLog(
             user_id=user_id,
             arm=arm,
+            time_bucket=time_bucket,
             sent_at=datetime.utcnow(),
         ))
         db.commit()
@@ -126,7 +126,6 @@ def log_message_sent(user_id: int, arm: BanditArm) -> SaveResult:
         return SaveResult(failed=True, error=str(e))
     finally:
         db.close()
-
 
 def get_latest_unreplied_message(user_id: int):
     """

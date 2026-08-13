@@ -1,17 +1,24 @@
 """
 handleIncomingMessage — called whenever a user sends a message in.
 
-Text messages: mark the latest open MessageLog row as replied, ensure the
-user exists in our db (onboard if not), then hand off to the agent
-(llm.process) which handles logging/clarifying/replying itself, and send
-back whatever it says.
+Text messages: if there's an open (unreplied) message, mark it replied
+and score it as a bandit success, ensure the user exists (onboard if
+not), then hand off to the agent (llm.process) which handles
+logging/clarifying/replying itself, and send back whatever it says.
 
 Non-text messages: canned reply, no reply-tracking (nothing to mark).
 """
 
 import logging
 
-from app.db.repo import get_latest_unreplied_message, mark_replied, get_user_by_phone, create_user
+from app.db.repo import (
+    get_latest_unreplied_message,
+    mark_replied,
+    mark_message_evaluated,
+    record_bandit_outcome,
+    get_user_by_phone,
+    create_user,
+)
 from app.response_handling_and_logging.llm import process as llm_process
 from app.util.send_message import send_text
 
@@ -51,6 +58,18 @@ def handle_incoming_message(message):
         if getattr(result, "failed", False):
             logger.error("Failed to mark replied for user_id=%s: %s",
                          phone_number, result.error)
+
+        eval_result = mark_message_evaluated(open_message.log_id, success=True)
+        if getattr(eval_result, "failed", False):
+            logger.error("Failed to mark evaluated for user_id=%s: %s",
+                         phone_number, eval_result.error)
+
+        outcome_result = record_bandit_outcome(
+            phone_number, open_message.arm, open_message.time_bucket, success=True
+        )
+        if getattr(outcome_result, "failed", False):
+            logger.error("Failed to record success outcome for user_id=%s: %s",
+                         phone_number, outcome_result.error)
     # else: unsolicited message, nothing open to mark — proceed anyway
 
     logger.info("STEP 4/6 calling llm_process...")

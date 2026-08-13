@@ -100,13 +100,12 @@ class MessageLog(Base):
     log_id = Column(Integer, primary_key=True)
     user_id = Column(String, ForeignKey("users.user_id"), nullable=False)
     arm = Column(Enum(BanditArm), nullable=False)
+    time_bucket = Column(Enum(TimeBucket), nullable=True)
     sent_at = Column(DateTime, nullable=False)
     replied_at = Column(DateTime, nullable=True)
     reply_content = Column(String, nullable=True)
     counted_success = Column(Boolean, nullable=True)
     retry_sent = Column(Boolean, nullable=False, default=False)
-    
-    
     
 class HabitLibrary(Base):
     __tablename__ = "habit_library"
