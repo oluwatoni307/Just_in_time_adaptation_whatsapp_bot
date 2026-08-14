@@ -254,3 +254,39 @@ def set_firebase_uid(phone_number: str, firebase_uid: str) -> SaveResult:
         return SaveResult(failed=True, error=str(e))
     finally:
         db.close()
+        
+        
+def user_replied_since(user_id: str, since: datetime) -> bool:
+    """
+    True if this user has replied to at least one message
+    (MessageLog.replied_at) since the given datetime.
+    """
+    db = SessionLocal()
+    try:
+        count = (
+            db.query(MessageLog)
+            .filter(
+                MessageLog.user_id == user_id,
+                MessageLog.replied_at.isnot(None),
+                MessageLog.replied_at >= since,
+            )
+            .count()
+        )
+        return count > 0
+    finally:
+        db.close()
+        
+def update_consecutive_quiet_days(user_id: str, value: int) -> SaveResult:
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if user is None:
+            return SaveResult(failed=True, error=f"no user for user_id={user_id}")
+        user.consecutive_quiet_days = value
+        db.commit()
+        return SaveResult(failed=False)
+    except Exception as e:
+        db.rollback()
+        return SaveResult(failed=True, error=str(e))
+    finally:
+        db.close()
